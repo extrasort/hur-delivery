@@ -1,0 +1,79 @@
+# CodeRabbit Configuration for Hur Delivery
+# Documentation: https://docs.coderabbit.ai/guides/configure-coderabbit
+
+language: en-US
+early_access: false
+
+reviews:
+  profile: chill
+  request_changes_workflow: false
+  high_level_summary: true
+  poem: true
+  review_status: true
+  collapse_walkthrough: false
+  auto_review:
+    enabled: true
+    drafts: false
+  
+  # File patterns to ignore
+  path_filters:
+    - "!**/*.lock"
+    - "!**/*.md"
+    - "!**/build/**"
+    - "!**/.dart_tool/**"
+    - "!**/node_modules/**"
+    - "!**/dist/**"
+    - "!**/*.generated.dart"
+    - "!**/*.g.dart"
+    - "!**/*.freezed.dart"
+  
+  # Additional instructions for reviewers
+  path_instructions:
+    - path: "lib/**/*.dart"
+      instructions: |
+        - Review for Flutter best practices
+        - Check for proper error handling
+        - Verify null safety
+        - Look for potential performance issues
+        - Check for proper state management with Provider
+    
+    - path: "admin_panel/**/*.js"
+      instructions: |
+        - Review for JavaScript ES6+ best practices
+        - Check for security issues
+        - Verify proper error handling
+        - Look for potential XSS vulnerabilities
+    
+    - path: "website/**/*.{jsx,tsx}"
+      instructions: |
+        - Review for React best practices
+        - Check for accessibility issues
+        - Verify proper component structure
+        - Look for performance optimizations
+    
+    - path: "supabase/functions/**/*.ts"
+      instructions: |
+        - Review for Deno best practices
+        - Check for security issues
+        - Verify proper error handling
+        - Look for potential SQL injection
+        - Check for proper authentication/authorization
+    
+    - path: "supabase/migrations/**/*.sql"
+      instructions: |
+        - Review for SQL best practices
+        - Check for performance issues (indexes, etc.)
+        - Verify RLS policies are properly set
+        - Look for potential security issues
+
+chat:
+  auto_reply: true
+
+# Knowledge base (optional - helps CodeRabbit understand your project better)
+knowledge_base:
+  learnings:
+    scope: auto
+  
+  # Project-specific context
+  opt_out: false
+
