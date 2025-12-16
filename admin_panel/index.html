@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>حر - لوحة التحكم الإدارية | Hur Admin Panel</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css' rel='stylesheet' />
+    <script src='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js'></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <!-- Login Screen -->
+    <div id="loginScreen" class="login-screen">
+        <div class="login-container">
+            <div class="login-header">
+                <i class="fas fa-truck-fast"></i>
+                <h1>حر - لوحة التحكم الإدارية</h1>
+                <p>Hur Delivery Admin Panel</p>
+            </div>
+            <form id="loginForm" class="login-form">
+                <div class="form-group">
+                    <label for="loginUsername">اسم المستخدم / Username</label>
+                    <input type="text" id="loginUsername" required placeholder="admin">
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword">كلمة المرور / Password</label>
+                    <input type="password" id="loginPassword" required placeholder="••••••••">
+                </div>
+                <button type="submit" class="btn btn-primary" id="loginSubmitBtn">
+                    <i class="fas fa-sign-in-alt"></i>
+                    تسجيل الدخول / Login
+                </button>
+                <div id="loginError" class="error-message"></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="appScreen" class="app-screen" style="display: none;">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <i class="fas fa-truck-fast"></i>
+                <h2>حر Admin</h2>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-item active" data-page="dashboard">
+                    <i class="fas fa-home"></i>
+                    <span>لوحة التحكم / Dashboard</span>
+                </a>
+                <a href="#" class="nav-item" data-page="users">
+                    <i class="fas fa-users"></i>
+                    <span>المستخدمون / Users</span>
+                </a>
+                <a href="#" class="nav-item" data-page="orders">
+                    <i class="fas fa-box"></i>
+                    <span>الطلبات / Orders</span>
+                </a>
+                <a href="#" class="nav-item" data-page="drivers">
+                    <i class="fas fa-motorcycle"></i>
+                    <span>السائقون / Drivers</span>
+                </a>
+                <a href="#" class="nav-item" data-page="merchants">
+                    <i class="fas fa-store"></i>
+                    <span>التجار / Merchants</span>
+                </a>
+                <a href="#" class="nav-item" data-page="wallets">
+                    <i class="fas fa-wallet"></i>
+                    <span>المحافظ / Wallets</span>
+                </a>
+                <a href="#" class="nav-item" data-page="earnings">
+                    <i class="fas fa-money-bill-wave"></i>
+                    <span>الأرباح / Earnings</span>
+                </a>
+                <a href="#" class="nav-item" data-page="notifications">
+                    <i class="fas fa-bell"></i>
+                    <span>الإشعارات / Notifications</span>
+                </a>
+                <a href="#" class="nav-item" data-page="verification">
+                    <i class="fas fa-user-check"></i>
+                    <span>التحقق من المستخدمين / User Verification</span>
+                </a>
+                <a href="#" class="nav-item" data-page="tracking">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <span>التتبع المباشر / Live Tracking</span>
+                </a>
+                <a href="#" class="nav-item" data-page="emergency" style="border-left: 3px solid #EF4444;">
+                    <i class="fas fa-exclamation-triangle" style="color: #EF4444;"></i>
+                    <span style="color: #EF4444; font-weight: 600;">الطوارئ / Emergency</span>
+                </a>
+                <a href="#" class="nav-item" data-page="sessions">
+                    <i class="fas fa-mobile-alt"></i>
+                    <span>الجلسات / Device Sessions</span>
+                </a>
+                <a href="#" class="nav-item" data-page="financial">
+                    <i class="fas fa-dollar-sign"></i>
+                    <span>المالية / Financial</span>
+                </a>
+                <a href="#" class="nav-item" data-page="reviews">
+                    <i class="fas fa-star"></i>
+                    <span>التقييمات / Reviews</span>
+                </a>
+                <a href="#" class="nav-item" data-page="promo-codes">
+                    <i class="fas fa-ticket-alt"></i>
+                    <span>أكواد الخصم / Promo Codes</span>
+                </a>
+                <a href="#" class="nav-item" data-page="zones">
+                    <i class="fas fa-map-marked-alt"></i>
+                    <span>المناطق / Zones</span>
+                </a>
+                <a href="#" class="nav-item" data-page="blacklist">
+                    <i class="fas fa-ban"></i>
+                    <span>القائمة السوداء / Blacklist</span>
+                </a>
+                <a href="#" class="nav-item" data-page="messaging">
+                    <i class="fas fa-comments"></i>
+                    <span>دعم العملاء / Support Messaging</span>
+                </a>
+                <a href="#" class="nav-item" data-page="disputes">
+                    <i class="fas fa-gavel"></i>
+                    <span>النزاعات / Disputes</span>
+                </a>
+                <a href="#" class="nav-item" data-page="customers">
+                    <i class="fas fa-user-friends"></i>
+                    <span>العملاء / Customers</span>
+                </a>
+                <a href="#" class="nav-item" data-page="announcements">
+                    <i class="fas fa-bullhorn"></i>
+                    <span>الإعلانات / Announcements</span>
+                </a>
+                <a href="#" class="nav-item" data-page="performance">
+                    <i class="fas fa-trophy"></i>
+                    <span>الأداء / Performance</span>
+                </a>
+                <a href="#" class="nav-item" data-page="system-config">
+                    <i class="fas fa-sliders-h"></i>
+                    <span>إعدادات النظام / System Config</span>
+                </a>
+                <a href="#" class="nav-item" data-page="analytics">
+                    <i class="fas fa-chart-line"></i>
+                    <span>التحليلات / Analytics</span>
+                </a>
+                <a href="#" class="nav-item" data-page="settings">
+                    <i class="fas fa-cog"></i>
+                    <span>الإعدادات / Settings</span>
+                </a>
+                <a href="#" class="nav-item" data-page="database">
+                    <i class="fas fa-database"></i>
+                    <span>قاعدة البيانات / Database</span>
+                </a>
+                <a href="#" class="nav-item" data-page="health" style="border-left: 3px solid #10B981;">
+                    <i class="fas fa-heartbeat" style="color: #10B981;"></i>
+                    <span style="color: #10B981; font-weight: 600;">Health Status / حالة الصحة</span>
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <button id="logoutBtn" class="btn btn-danger">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>تسجيل الخروج / Logout</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="header">
+                <div class="header-left">
+                    <button id="sidebarToggle" class="btn-icon">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1 id="pageTitle">لوحة التحكم / Dashboard</h1>
+                </div>
+                <div class="header-right">
+                    <div class="user-info">
+                        <i class="fas fa-user-circle"></i>
+                        <span id="userName">Admin</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Page Content -->
+            <div class="content">
+                <!-- Dashboard Page -->
+                <div id="dashboardPage" class="page active">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon blue">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <div class="stat-details">
+                                <h3 id="totalUsers">0</h3>
+                                <p>إجمالي المستخدمين<br>Total Users</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon green">
+                                <i class="fas fa-box"></i>
+                            </div>
+                            <div class="stat-details">
+                                <h3 id="totalOrders">0</h3>
+                                <p>إجمالي الطلبات<br>Total Orders</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon orange">
+                                <i class="fas fa-motorcycle"></i>
+                            </div>
+                            <div class="stat-details">
+                                <h3 id="activeDrivers">0</h3>
+                                <p>السائقون النشطون<br>Active Drivers</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon purple">
+                                <i class="fas fa-store"></i>
+                            </div>
+                            <div class="stat-details">
+                                <h3 id="activeMerchants">0</h3>
+                                <p>التجار النشطون<br>Active Merchants</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon teal">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div class="stat-details">
+                                <h3 id="pendingOrders">0</h3>
+                                <p>الطلبات المعلقة<br>Pending Orders</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon red">
+                                <i class="fas fa-user-check"></i>
+                            </div>
+                            <div class="stat-details">
+                                <h3 id="pendingVerifications">0</h3>
+                                <p>تحقق معلق<br>Pending Verifications</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="charts-grid">
+                        <div class="chart-card">
+                            <h3>إحصائيات الطلبات / Orders Statistics</h3>
+                            <canvas id="ordersChart"></canvas>
+                        </div>
+                        <div class="chart-card">
+                            <h3>توزيع المستخدمين / Users Distribution</h3>
+                            <canvas id="usersChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="recent-section">
+                        <h3>الطلبات الأخيرة / Recent Orders</h3>
+                        <div id="recentOrders" class="table-container">
+                            <p class="loading">جاري التحميل...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Users Page -->
+                <div id="usersPage" class="page">
+                    <div class="page-header">
+                        <h2>إدارة المستخدمين / Users Management</h2>
+                        <div class="page-actions">
+                            <input type="text" id="usersSearch" class="search-input" placeholder="بحث... / Search...">
+                            <select id="usersRoleFilter" class="filter-select">
+                                <option value="">جميع الأدوار / All Roles</option>
+                                <option value="merchant">تاجر / Merchant</option>
+                                <option value="driver">سائق / Driver</option>
+                                <option value="customer">عميل / Customer</option>
+                                <option value="admin">مدير / Admin</option>
+                            </select>
+                            <button id="createAdminBtn" class="btn btn-success" onclick="openCreateAdminModal()">
+                                <i class="fas fa-user-shield"></i> إنشاء مدير / Create Admin
+                            </button>
+                            <button id="refreshUsers" class="btn btn-secondary">
+                                <i class="fas fa-sync"></i> تحديث / Refresh
+                            </button>
+                        </div>
+                    </div>
+                    <div id="usersTable" class="table-container">
+                        <p class="loading">جاري التحميل...</p>
+                    </div>
+                </div>
+
+                <!-- Orders Page -->
+                <div id="ordersPage" class="page">
+                    <div class="page-header">
+                        <h2>إدارة الطلبات / Orders Management</h2>
+                        <div class="page-actions">
+                            <input type="text" id="ordersSearch" class="search-input" placeholder="بحث... / Search...">
+                            <select id="ordersStatusFilter" class="filter-select">
+                                <option value="">جميع الحالات / All Statuses</option>
+                                <option value="pending">معلق / Pending</option>
+                                <option value="assigned">مخصص / Assigned</option>
+                                <option value="accepted">مقبول / Accepted</option>
+                                <option value="on_the_way">في الطريق / On The Way</option>
+                                <option value="delivered">تم التسليم / Delivered</option>
+                                <option value="cancelled">ملغي / Cancelled</option>
+                                <option value="rejected">مرفوض / Rejected</option>
+                            </select>
+                            <button id="refreshOrders" class="btn btn-secondary">
+                                <i class="fas fa-sync"></i> تحديث / Refresh
+                            </button>
+                        </div>
+                    </div>
+                    <div id="ordersTable" class="table-container">
+                        <p class="loading">جاري التحميل...</p>
+                    </div>
+                </div>
+
+                <!-- Drivers Page -->
+                <div id="driversPage" class="page">
+                    <div class="page-header">
+                        <h2>إدارة السائقين / Drivers Management</h2>
+                        <div class="page-actions">
+                            <input type="text" id="driversSearch" class="search-input" placeholder="بحث... / Search...">
+                            <select id="driversStatusFilter" class="filter-select">
+                                <option value="">الكل / All</option>
+                                <option value="online">متصل / Online</option>
+                                <option value="offline">غير متصل / Offline</option>
+                                <option value="verified">موثق / Verified</option>
+                                <option value="unverified">غير موثق / Unverified</option>
+                            </select>
+                            <button id="refreshDrivers" class="btn btn-secondary">
+                                <i class="fas fa-sync"></i> تحديث / Refresh
+                            </button>
+                        </div>
+                    </div>
+                    <div id="driversTable" class="table-container">
+                        <p class="loading">جاري التحميل...</p>
+                    </div>
+                </div>
+
+                <!-- Merchants Page -->
+                <div id="merchantsPage" class="page">
+                    <div class="page-header">
+                        <h2>إدارة التجار / Merchants Management</h2>
+                        <div class="page-actions">
+                            <input type="text" id="merchantsSearch" class="search-input" placeholder="بحث... / Search...">
+                            <select id="merchantsStatusFilter" class="filter-select">
+                                <option value="">الكل / All</option>
+                                <option value="verified">موثق / Verified</option>
+                                <option value="unverified">غير موثق / Unverified</option>
+                            </select>
+                            <button id="refreshMerchants" class="btn btn-secondary">
+                                <i class="fas fa-sync"></i> تحديث / Refresh
+                            </button>
+                        </div>
+                    </div>
+                    <div id="merchantsTable" class="table-container">
+                        <p class="loading">جاري التحميل...</p>
+                    </div>
+                </div>
+
+                <!-- Wallets Page -->
+                <div id="walletsPage" class="page">
+                    <div class="page-header">
+                        <h2>إدارة المحافظ / Wallets Management</h2>
+                        <div class="page-actions">
+                            <input type="text" id="walletsSearch" class="search-input" placeholder="بحث... / Search...">
+                            <button id="refreshWallets" class="btn btn-secondary">
+                                <i class="fas fa-sync"></i> تحديث / Refresh
+                            </button>
+                        </div>
+                    </div>
+                    <div id="walletsTable" class="table-container">
+                        <p class="loading">جاري التحميل...</p>
+                    </div>
+                </div>
+
+                <!-- Earnings Page -->
+                <div id="earningsPage" class="page">
+                    <div class="page-header">
+                        <h2>إدارة الأرباح / Earnings Management</h2>
+                        <div class="page-actions">
+                            <input type="text" id="earningsSearch" class="search-input" placeholder="بحث... / Search...">
+                            <select id="earningsStatusFilter" class="filter-select">
+                                <option value="">جميع الحالات / All Statuses</option>
+                                <option value="pending">معلق / Pending</option>
+                                <option value="paid">مدفوع / Paid</option>
+                                <option value="cancelled">ملغي / Cancelled</option>
+                            </select>
+                            <button id="refreshEarnings" class="btn btn-secondary">
+                                <i class="fas fa-sync"></i> تحديث / Refresh
+                            </button>
+                        </div>
+                    </div>
+                    <div id="earningsTable" class="table-container">
+                        <p class="loading">جاري التحميل...</p>
+                    </div>
+                </div>
+
+                <!-- Notifications Page -->
+                <div id="notificationsPage" class="page">
+                    <div class="page-header">
+                        <h2>إدارة الإشعارات / Notifications Management</h2>
+                        <div class="page-actions">
+                            <button id="sendBulkNotification" class="btn btn-primary">
+                                <i class="fas fa-paper-plane"></i> إرسال إشعار جماعي / Send Bulk
+                            </button>
+                            <button id="refreshNotifications" class="btn btn-secondary">
+                                <i class="fas fa-sync"></i> تحديث / Refresh
+                            </button>
+                        </div>
+                    </div>
+                    <div id="notificationsTable" class="table-container">
+                        <p class="loading">جاري التحميل...</p>
+                    </div>
+                </div>
+
+                <!-- Verification Page -->
+                <div id="verificationPage" class="page">
+                    <div class="page-header">
+                        <h2>التحقق من المستخدمين / User Verification</h2>
+                        <div class="page-actions">
+                            <select id="verificationRoleFilter" class="filter-select">
+                                <option value="">جميع الأدوار / All Roles</option>
+                                <option value="merchant">تاجر / Merchant</option>
+                                <option value="driver">سائق / Driver</option>
+                            </select>
+                            <button id="refreshVerification" class="btn btn-secondary">
+                                <i class="fas fa-sync"></i> تحديث / Refresh
+                            </button>
+                        </div>
+                    </div>
+                    <div id="verificationTable" class="table-container">
+                        <p class="loading">جاري التحميل...</p>
+                    </div>
+                </div>
+
+                <!-- Tracking Page -->
+                <div id="trackingPage" class="page">
+                    <div class="page-header">
+                        <h2>التتبع المباشر / Live Tracking</h2>
+                        <div class="page-actions">
+                            <button id="refreshTracking" class="btn btn-secondary">
+                                <i class="fas fa-sync"></i> تحديث / Refresh
+                            </button>
+                            <button id="centerMap" class="btn btn-info">
+                                <i class="fas fa-crosshairs"></i> توسيط الخريطة / Center Map
+                            </button>
+                        </div>
+                    </div>
+                    <div class="tracking-stats">
+                        <div class="stat-card">
+                            <div class="stat-icon green">
+                                <i class="fas fa-motorcycle"></i>
+                            </div>
+                            <div class="stat-details">
+                                <h3 id="onlineDriversCount">0</h3>
+                                <p>سائقون متصلون<br>Online Drivers</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="trackingMap" class="map-container">
+                        <div id="map" style="width: 100%; height: 600px; border-radius: 0.75rem;"></div>
+                    </div>
+                    <div id="driversLocations" class="drivers-list-sidebar">
+                        <h3>السائقون المتصلون / Online Drivers</h3>
+                        <div id="driversListContent"></div>
+                    </div>
+                </div>
+
+                <!-- Emergency Page -->
+                <div id="emergencyPage" class="page">
+                    <div class="page-header" style="background: linear-gradient(135deg, #FEE2E2 0%, #FECACA 100%); border-left: 4px solid #EF4444;">
+                        <div>
+                            <h2><i class="fas fa-exclamation-triangle" style="color: #EF4444;"></i> مراقبة الطوارئ / Emergency Monitoring</h2>
+                            <p style="color: #7F1D1D;">مراقبة الطلبات المتأخرة والسائقين غير النشطين / Monitor delayed orders and inactive drivers</p>
+                        </div>
+                        <div>
+                            <button class="btn btn-danger" id="systemShutdownBtn" onclick="toggleSystemShutdown()" style="margin-left: 10px;">
+                                <i class="fas fa-power-off"></i> <span id="shutdownBtnText">إيقاف النظام / Shutdown System</span>
+                            </button>
+                            <button class="btn btn-primary" id="refreshEmergency" onclick="loadEmergency()">
+                                <i class="fas fa-sync-alt"></i> تحديث / Refresh
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- System Status Card -->
+                    <div class="content-card" style="margin-bottom: 20px;">
+                        <div class="card-header" id="systemStatusHeader" style="background: #DCFCE7; color: #166534;">
+                            <h3><i class="fas fa-circle" id="systemStatusIcon" style="color: #22C55E;"></i> <span id="systemStatusText">النظام نشط / System Active</span></h3>
+                        </div>
+                        <div class="card-body">
+                            <p id="systemStatusDescription">النظام يعمل بشكل طبيعي. جميع الميزات متاحة. / System is operating normally. All features available.</p>
+                            <div id="onlineDriversInfo"></div>
+                        </div>
+                    </div>
+
+                    <!-- App Version Control Card -->
+                    <div class="content-card" style="margin-bottom: 20px;">
+                        <div class="card-header" style="background: #DBEAFE; color: #1E3A8A;">
+                            <h3><i class="fas fa-mobile-alt"></i> التحكم بإصدار التطبيق / App Version Control</h3>
+                        </div>
+                        <div class="card-body">
+                            <p style="margin-bottom: 15px;">يمكنك إجبار المستخدمين على تحديث التطبيق عن طريق تعيين الحد الأدنى للإصدار المطلوب / Force users to update by setting minimum required version</p>
+                            <div style="display: flex; gap: 15px; align-items: center;">
+                                <div style="flex: 1;">
+                                    <label for="minAppVersion" style="display: block; margin-bottom: 8px; font-weight: 600;">
+                                        الحد الأدنى للإصدار / Minimum Version:
+                                    </label>
+                                    <input 
+                                        type="text" 
+                                        id="minAppVersion" 
+                                        placeholder="1.0.0" 
+                                        style="width: 100%; padding: 10px; border: 1px solid #D1D5DB; border-radius: 8px; font-size: 16px;"
+                                        pattern="\d+\.\d+\.\d+"
+                                        title="Use semantic versioning (e.g., 1.0.0)"
+                                    >
+                                    <small style="color: #6B7280; display: block; margin-top: 5px;">
+                                        Semantic versioning: major.minor.patch (e.g., 1.0.0, 2.3.1)
+                                    </small>
+                                </div>
+                                <div>
+                                    <button class="btn btn-primary" onclick="updateMinAppVersion()" style="margin-top: 25px;">
+                                        <i class="fas fa-save"></i> حفظ / Save
+                                    </button>
+                                </div>
+                            </div>
+                            <div id="versionUpdateStatus" style="margin-top: 15px;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Emergency Stats -->
+                    <div class="stats-grid" style="margin-bottom: 20px;">
+                        <div class="stat-card" style="background: linear-gradient(135deg, #FEE2E2 0%, #FCA5A5 100%); border-left: 4px solid #DC2626;">
+                            <div class="stat-value" id="delayedOrdersCount">0</div>
+                            <div class="stat-label">طلبات متأخرة / Delayed Orders</div>
+                            <i class="fas fa-clock stat-icon" style="color: #DC2626;"></i>
+                        </div>
+                        <div class="stat-card" style="background: linear-gradient(135deg, #FED7AA 0%, #FDBA74 100%); border-left: 4px solid #EA580C;">
+                            <div class="stat-value" id="inactiveDriversCount">0</div>
+                            <div class="stat-label">سائقون غير نشطين / Inactive Drivers</div>
+                            <i class="fas fa-motorcycle stat-icon" style="color: #EA580C;"></i>
+                        </div>
+                        <div class="stat-card" style="background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%); border-left: 4px solid #D97706;">
+                            <div class="stat-value" id="criticalIssuesCount">0</div>
+                            <div class="stat-label">قضايا حرجة / Critical Issues</div>
+                            <i class="fas fa-exclamation-circle stat-icon" style="color: #D97706;"></i>
+                        </div>
+                        <div class="stat-card" style="background: linear-gradient(135deg, #DBEAFE 0%, #93C5FD 100%); border-left: 4px solid #2563EB;">
+                            <div class="stat-value" id="lastRefreshTime">--:--</div>
+                            <div class="stat-label">آخر تحديث / Last Refresh</div>
+                            <i class="fas fa-sync stat-icon" style="color: #2563EB;"></i>
+                        </div>
+                    </div>
+
+                    <!-- Delayed Orders Section -->
+                    <div class="content-card" style="margin-bottom: 20px;">
+                        <div class="card-header" style="background: #FEE2E2; color: #991B1B;">
+                            <h3><i class="fas fa-clock"></i> طلبات متأخرة (أكثر من ساعة) / Delayed Orders (Over 1 Hour)</h3>
+                        </div>
+                        <div class="card-body">
+                            <div id="delayedOrdersTable">
+                                <p class="loading">جاري التحميل...</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Inactive Drivers Section -->
+                    <div class="content-card">
+                        <div class="card-header" style="background: #FFEDD5; color: #9A3412;">
+                            <h3><i class="fas fa-motorcycle"></i> سائقون غير نشطين مع طلبات نشطة / Inactive Drivers with Active Orders</h3>
+                            <small>الموقع لم يتم تحديثه منذ أكثر من 5 دقائق / Location not updated for over 5 minutes</small>
+                        </div>
+                        <div class="card-body">
+                            <div id="inactiveDriversTable">
+                                <p class="loading">جاري التحميل...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sessions Page -->
+                <div id="sessionsPage" class="page">
+                    <div class="page-header">
+                        <h2>إدارة الجلسات / Device Sessions Management</h2>
+                        <div class="page-actions">
+                            <input type="text" id="sessionsSearch" class="search-input" placeholder="بحث... / Search...">
+                            <button id="refreshSessions" class="btn btn-secondary">
+                                <i class="fas fa-sync"></i> تحديث / Refresh
+                            </button>
+                        </div>
+                    </div>
+                    <div id="sessionsTable" class="table-container">
+                        <p class="loading">جاري التحميل...</p>
+                    </div>
+                </div>
+
+                <!-- Analytics Page -->
+                <div id="analyticsPage" class="page">
+                    <h2>التحليلات المتقدمة / Advanced Analytics</h2>
+                    <div class="analytics-grid">
+                        <div class="chart-card">
+                            <h3>الطلبات حسب التاريخ / Orders by Date</h3>
+                            <canvas id="ordersDateChart"></canvas>
+                        </div>
+                        <div class="chart-card">
+                            <h3>الإيرادات / Revenue</h3>
+                            <canvas id="revenueChart"></canvas>
+                        </div>
+                        <div class="chart-card">
+                            <h3>أداء السائقين / Driver Performance</h3>
+                            <canvas id="driverPerformanceChart"></canvas>
+                        </div>
+                        <div class="chart-card">
+                            <h3>أداء التجار / Merchant Performance</h3>
+                            <canvas id="merchantPerformanceChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Settings Page -->
+                <div id="settingsPage" class="page">
+                    <h2>إعدادات النظام / System Settings</h2>
+                    <div class="settings-container">
+                        <div class="settings-card">
+                            <h3>إعدادات عامة / General Settings</h3>
+                            <div id="settingsForm" class="form-grid">
+                                <p class="loading">جاري التحميل...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Financial Dashboard Page -->
+                <div id="financialPage" class="page">
+                    <div class="page-header">
+                        <h2>لوحة المالية / Financial Dashboard</h2>
+                    </div>
+                    <div id="financialSummary" class="cards-grid"></div>
+                    <div class="card">
+                        <h3>التقرير اليومي / Daily Revenue Report</h3>
+                        <div id="dailyRevenueTable"></div>
+                    </div>
+                </div>
+
+                <!-- Reviews & Ratings Page -->
+                <div id="reviewsPage" class="page">
+                    <div class="page-header">
+                        <h2>التقييمات والمراجعات / Reviews & Ratings</h2>
+                    </div>
+                    <div id="reviewsContent"></div>
+                </div>
+
+                <!-- Promo Codes Page -->
+                <div id="promo-codesPage" class="page">
+                    <div class="page-header">
+                        <h2>أكواد الخصم / Promotional Codes</h2>
+                        <button class="btn btn-primary" onclick="openCreatePromoModal()">
+                            <i class="fas fa-plus"></i> إنشاء كود جديد / Create Code
+                        </button>
+                    </div>
+                    <div id="promoCodesTable"></div>
+                </div>
+
+                <!-- Delivery Zones Page -->
+                <div id="zonesPage" class="page">
+                    <div class="page-header">
+                        <h2>مناطق التوصيل / Delivery Zones</h2>
+                        <button class="btn btn-primary" onclick="openCreateZoneModal()">
+                            <i class="fas fa-plus"></i> إنشاء منطقة / Create Zone
+                        </button>
+                    </div>
+                    <div id="zonesTable"></div>
+                </div>
+
+                <!-- Blacklist Page -->
+                <div id="blacklistPage" class="page">
+                    <div class="page-header">
+                        <h2>القائمة السوداء / Blacklist</h2>
+                        <button class="btn btn-primary" onclick="openAddBlacklistModal()">
+                            <i class="fas fa-plus"></i> إضافة للقائمة السوداء / Add to Blacklist
+                        </button>
+                    </div>
+                    <div id="blacklistTable"></div>
+                </div>
+
+                <!-- Messaging Page -->
+                <div id="messagingPage" class="page">
+                    <div class="messaging-container">
+                        <div class="messaging-conversations">
+                            <div class="messaging-header">
+                                <i class="fas fa-comments"></i>
+                                <h2>دعم العملاء / Support Messaging</h2>
+                            </div>
+                            <div id="messagingConversations" class="messaging-list">
+                                <p class="empty-state">لا توجد محادثات حالياً / No conversations yet</p>
+                            </div>
+                        </div>
+                        <div class="messaging-thread">
+                            <div class="messaging-thread-header">
+                                <div>
+                                    <h3 id="messagingActiveTitle">اختر محادثة / Select a conversation</h3>
+                                    <p id="messagingActiveSubtitle" class="thread-subtitle"></p>
+                                </div>
+                                <button id="messagingRefreshBtn" class="btn btn-secondary btn-small">
+                                    <i class="fas fa-rotate-right"></i> تحديث / Refresh
+                                </button>
+                            </div>
+                            <div id="messagingMessages" class="messaging-messages">
+                                <div class="empty-state">اختر محادثة لعرض الرسائل / Select a conversation to view messages</div>
+                            </div>
+                            <div class="messaging-compose">
+                                <textarea id="messagingCompose" rows="2" placeholder="اكتب رد الدعم... / Write a support reply..."></textarea>
+                                <button id="messagingSendBtn" class="btn btn-primary">
+                                    <i class="fas fa-paper-plane"></i> إرسال / Send
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Disputes Page -->
+                <div id="disputesPage" class="page">
+                    <div class="page-header">
+                        <h2>النزاعات / Disputes</h2>
+                    </div>
+                    <div id="disputesTable"></div>
+                </div>
+
+                <!-- Customers Page -->
+                <div id="customersPage" class="page">
+                    <div class="page-header">
+                        <h2>إدارة العملاء / Customer Management</h2>
+                        <input type="search" id="customerSearch" placeholder="🔍 البحث برقم الهاتف / Search by phone">
+                    </div>
+                    <div id="customersTable"></div>
+                </div>
+
+                <!-- Announcements Page -->
+                <div id="announcementsPage" class="page">
+                    <div class="page-header">
+                        <h2>الإعلانات / Announcements</h2>
+                        <button class="btn btn-primary" onclick="openCreateAnnouncementModal()">
+                            <i class="fas fa-plus"></i> إنشاء إعلان / Create Announcement
+                        </button>
+                    </div>
+                    <div id="announcementsTable"></div>
+                </div>
+
+                <!-- Performance Page -->
+                <div id="performancePage" class="page">
+                    <div class="page-header">
+                        <h2>أداء السائقين / Driver Performance</h2>
+                    </div>
+                    <div id="topDriversTable"></div>
+                    <div class="card">
+                        <h3>تفاصيل سائق / Driver Details</h3>
+                        <div id="driverPerformanceDetails"></div>
+                    </div>
+                </div>
+
+                <!-- System Config Page -->
+                <div id="system-configPage" class="page">
+                    <div class="page-header">
+                        <h2>إعدادات النظام / System Configuration</h2>
+                    </div>
+                    <div id="systemConfigTable"></div>
+                </div>
+
+                <!-- Database Page -->
+                <div id="databasePage" class="page">
+                    <h2>إدارة قاعدة البيانات / Database Management</h2>
+                    <div class="database-tools" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+                        
+                        <div class="card">
+                            <h3>📥 تصدير البيانات / Data Export</h3>
+                            <div style="display: flex; flex-direction: column; gap: 10px;">
+                                <button class="btn btn-primary" onclick="exportOrdersToCSV()">
+                                    <i class="fas fa-download"></i> تصدير الطلبات / Export Orders
+                                </button>
+                                <button class="btn btn-primary" onclick="exportTransactionsToCSV()">
+                                    <i class="fas fa-download"></i> تصدير المعاملات / Export Transactions
+                                </button>
+                                <button class="btn btn-primary" onclick="exportUsersToCSV()">
+                                    <i class="fas fa-download"></i> تصدير المستخدمين / Export Users
+                                </button>
+                                <button class="btn btn-success" onclick="generateComprehensiveReport()">
+                                    <i class="fas fa-file-pdf"></i> تقرير شامل / Comprehensive Report
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="card">
+                            <h3>📊 تصدير حسب الفئة / Export by Category</h3>
+                            <div style="display: flex; flex-direction: column; gap: 10px;">
+                                <button class="btn btn-info" onclick="exportUsersToCSV('driver')">
+                                    <i class="fas fa-motorcycle"></i> السائقون / Drivers
+                                </button>
+                                <button class="btn btn-info" onclick="exportUsersToCSV('merchant')">
+                                    <i class="fas fa-store"></i> التجار / Merchants
+                                </button>
+                                <button class="btn btn-info" onclick="exportUsersToCSV(null)">
+                                    <i class="fas fa-users"></i> العملاء / Customers
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="card">
+                            <h3>🔧 أدوات متقدمة / Advanced Tools</h3>
+                            <div style="display: flex; flex-direction: column; gap: 10px;">
+                                <button class="btn btn-warning" onclick="openDateRangeExport()">
+                                    <i class="fas fa-calendar-alt"></i> تصدير بتاريخ محدد / Date Range Export
+                                </button>
+                                <button class="btn btn-info" onclick="loadDatabaseStats()">
+                                    <i class="fas fa-chart-bar"></i> إحصائيات DB / DB Stats
+                                </button>
+                            </div>
+                        </div>
+                        
+                    </div>
+                    
+                    <div class="card" style="margin-top: 20px;">
+                        <h3>📊 إحصائيات قاعدة البيانات / Database Statistics</h3>
+                        <div id="databaseStatsContent"></div>
+                    </div>
+                    
+                    <div class="tool-card" style="display: none;">
+                        <h3>SQL Query Runner</h3>
+                        <textarea id="sqlQuery" placeholder="SELECT * FROM users LIMIT 10;" rows="5"></textarea>
+                        <button class="btn btn-primary" onclick="admin.runSQLQuery()">
+                            <i class="fas fa-play"></i> تنفيذ / Execute
+                        </button>
+                            <div id="sqlResults"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Health Status Page -->
+                <div id="healthPage" class="page">
+                    <div class="page-header">
+                        <h2>
+                            <i class="fas fa-heartbeat" style="color: #10B981;"></i> 
+                            Health Status / حالة الصحة
+                        </h2>
+                        <div class="page-actions">
+                            <button id="refreshHealth" class="btn btn-secondary" onclick="loadHealthStatus()">
+                                <i class="fas fa-sync"></i> تحديث / Refresh
+                            </button>
+                        </div>
+                    </div>
+                    <div id="healthPageContent">
+                        <p class="loading">جاري التحميل... / Loading...</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modals -->
+    <!-- User Details Modal -->
+    <div id="userModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>تفاصيل المستخدم / User Details</h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body" id="userModalBody">
+                <p class="loading">جاري التحميل...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Order Details Modal -->
+    <div id="orderModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>تفاصيل الطلب / Order Details</h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body" id="orderModalBody">
+                <p class="loading">جاري التحميل...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Wallet Top-up Modal -->
+    <div id="walletModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>شحن المحفظة / Top-up Wallet</h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body" id="walletModalBody">
+                <p class="loading">جاري التحميل...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Send Modal -->
+    <div id="notificationModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>إرسال إشعار / Send Notification</h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="notificationForm">
+                    <div class="form-group">
+                        <label>المستلم / Recipient</label>
+                        <select id="notifRecipient" required>
+                            <option value="all">الجميع / All</option>
+                            <option value="merchants">التجار / Merchants</option>
+                            <option value="drivers">السائقون / Drivers</option>
+                            <option value="customers">العملاء / Customers</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>العنوان / Title</label>
+                        <input type="text" id="notifTitle" required>
+                    </div>
+                    <div class="form-group">
+                        <label>الرسالة / Message</label>
+                        <textarea id="notifBody" required rows="4"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-paper-plane"></i> إرسال / Send
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Verification Modal -->
+    <div id="verificationModal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2>التحقق من المستخدم / User Verification</h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body" id="verificationModalBody">
+                <p class="loading">جاري التحميل...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Order Action Modal -->
+    <div id="orderActionModal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2>إدارة الطلب / Order Management</h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body" id="orderActionModalBody">
+                <p class="loading">جاري التحميل...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="config.js"></script>
+    <script src="app_messaging.js"></script>
+    <script src="app.js"></script>
+    <script src="app_verification.js"></script>
+    <script src="app_order_management.js"></script>
+    <script src="app_admin_management.js"></script>
+    <script src="app_emergency.js"></script>
+    <script src="app_features.js"></script>
+    <script src="app_reports.js"></script>
+    <script src="app_health.js"></script>
+</body>
+</html>

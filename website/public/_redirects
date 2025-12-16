@@ -1,0 +1,25 @@
+# Admin subdomain - exclude assets from SPA routing
+# Assets should be served directly
+https://admin.hur.delivery/assets/*    /admin/assets/:splat   200
+https://admin.hur.delivery/*.js       /admin/:splat          200
+https://admin.hur.delivery/*.css      /admin/:splat          200
+https://admin.hur.delivery/*.svg      /admin/:splat          200
+https://admin.hur.delivery/*.png      /admin/:splat          200
+https://admin.hur.delivery/*.jpg      /admin/:splat          200
+https://admin.hur.delivery/*.ico      /admin/:splat          200
+
+# Admin subdomain - serve admin SPA for all other paths
+https://admin.hur.delivery/*    /admin/index.html   200
+
+# Admin folder SPA routing (exclude assets)
+/admin/assets/*                 /admin/assets/:splat   200
+/admin/*.js                     /admin/:splat          200
+/admin/*.css                    /admin/:splat          200
+/admin/*.svg                    /admin/:splat          200
+/admin/*.png                    /admin/:splat          200
+/admin/*.jpg                    /admin/:splat          200
+/admin/*.ico                    /admin/:splat          200
+/admin/*                        /admin/index.html      200
+
+# Main site SPA routing
+/*                              /index.html         200

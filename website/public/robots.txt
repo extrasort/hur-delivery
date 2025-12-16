@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://www.hurdelivery.iq/sitemap.xml
+
+
+

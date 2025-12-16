@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>غرفة عمليات الرسائل - Hur Ops Messaging</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <style>
+      /* Ops Messaging Page Layout */
+      .ops-shell { display: grid; grid-template-rows: 56px 1fr; height: 100vh; }
+      .ops-header { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: #0f766e; color: #fff; }
+      .ops-header .left, .ops-header .right { display: flex; align-items: center; gap: 8px; }
+      .ops-header h1 { margin: 0; font-size: 1.1rem; }
+      .ops-container { display: grid; grid-template-columns: 360px 1fr 400px; gap: 12px; padding: 12px; background: #f8fafc; }
+      .ops-card { background: #fff; border-radius: 10px; box-shadow: var(--shadow-lg); display: flex; flex-direction: column; overflow: hidden; }
+      .ops-card .card-header { padding: 10px 12px; border-bottom: 1px solid #eef2f7; background: rgba(15,118,110,0.06); color: #0f766e; font-weight: 700; }
+      .ops-card .card-body { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+      .ops-conversations-list { flex: 1; overflow: auto; }
+      .ops-messages { flex: 1; overflow: auto; padding: 12px; display: flex; flex-direction: column; gap: 8px; background: var(--gray-50); }
+      .ops-compose { border-top: 1px solid #eef2f7; padding: 8px; display: flex; flex-direction: column; gap: 8px; }
+      .ops-compose textarea { width: 100%; min-height: 80px; max-height: 220px; resize: vertical; border-radius: 8px; border: 1px solid rgba(15,23,42,0.12); padding: 8px; }
+      .ops-compose .actions { display: flex; justify-content: space-between; gap: 8px; }
+      .ops-btn { border: none; border-radius: 8px; background: #0f766e; color: #fff; padding: 8px 12px; cursor: pointer; }
+      .ops-btn.secondary { background: #64748b; }
+      .ops-btn.icon { background: transparent; color: #0f766e; padding: 4px; }
+      .ops-toolbar { display: flex; gap: 6px; align-items: center; }
+      .ops-input, .ops-select { border: 1px solid rgba(15,23,42,0.12); border-radius: 8px; padding: 6px 8px; background: #fff; }
+      .ops-tabs { display: flex; gap: 4px; border-bottom: 1px solid #eef2f7; padding: 6px; }
+      .ops-tab { border: none; background: transparent; padding: 8px 10px; border-radius: 8px; cursor: pointer; }
+      .ops-tab.active { background: rgba(15,118,110,0.12); color: #0f766e; }
+      .ops-pane { display: none; height: 100%; overflow: auto; }
+      .ops-pane.active { display: block; }
+      #driverMap { width: 100%; height: 280px; border-radius: 8px; border: 1px solid #e2e8f0; }
+      .ops-row { display: flex; gap: 8px; align-items: center; }
+      .ops-space { flex: 1; }
+      .msg { background: #fff; padding: 10px; border-radius: 10px; box-shadow: var(--shadow-sm); max-width: 85%; align-self: flex-start; }
+      .msg.me { background: rgba(15,118,110,0.16); align-self: flex-end; }
+      .msg .meta { margin-top: 4px; font-size: 0.75rem; color: #64748b; display: flex; gap: 8px; align-items: center; }
+    </style>
+    <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet" />
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="./config.js"></script>
+    <script src="./app_messaging.js"></script>
+    <script>
+      let supabaseClient = null;
+      document.addEventListener('DOMContentLoaded', async () => {
+        // Init supabase
+        supabaseClient = window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY, {
+          functions: { url: `${CONFIG.SUPABASE_URL}/functions/v1` },
+        });
+        // Restore admin session
+        const stored = localStorage.getItem('admin_session');
+        if (!stored) { window.location.href = './index.html'; return; }
+        try {
+          const sess = JSON.parse(stored);
+          if (sess?.supabase_session?.access_token && sess?.supabase_session?.refresh_token) {
+            await supabaseClient.auth.setSession({
+              access_token: sess.supabase_session.access_token,
+              refresh_token: sess.supabase_session.refresh_token,
+            });
+          }
+        } catch (_) {}
+
+        // Hook AdminMessaging
+        await AdminMessaging.ensureCurrentUser();
+        await AdminMessaging.initRealtime();
+
+        // Wire UI
+        AdminMessaging.onConversations(renderConversations);
+        AdminMessaging.onMessages(renderMessages);
+        AdminMessaging.onOrders(renderOrders, { immediate: false });
+
+        document.getElementById('opsSend').addEventListener('click', handleSend);
+        document.getElementById('opsCompose').addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
+        });
+        document.getElementById('tabOrders').addEventListener('click', () => setActivePane('orders'));
+        document.getElementById('tabDriver').addEventListener('click', () => setActivePane('driver'));
+        document.getElementById('tabUser').addEventListener('click', () => setActivePane('user'));
+        document.getElementById('copyCoords').addEventListener('click', copyDriverCoords);
+
+        // Start default pane
+        setActivePane('orders');
+      });
+
+      function renderConversations(conversations) {
+        const list = document.getElementById('opsConversations');
+        list.innerHTML = '';
+        conversations.forEach((c) => {
+          const meta = c.meta || {};
+          const el = document.createElement('div');
+          el.className = 'messaging-item';
+          el.dataset.conversationId = c.id;
+          el.innerHTML = `
+            <div class="messaging-item-header">
+              <span class="messaging-item-title">${escapeHtml(meta.title || 'محادثة')}</span>
+              <time>${escapeHtml(meta.createdLabel || '')}</time>
+            </div>
+            <p class="messaging-item-subtitle">${escapeHtml(meta.subtitle || '')}</p>
+            <p class="messaging-item-preview">${escapeHtml(meta.lastMessagePreview || '')}</p>
+          `;
+          el.addEventListener('click', async () => {
+            await AdminMessaging.selectConversation(c.id);
+          });
+          list.appendChild(el);
+        });
+      }
+
+      function renderMessages(messages) {
+        const box = document.getElementById('opsMessages');
+        box.innerHTML = '';
+        const me = AdminMessaging.state.currentUser?.id;
+        messages.forEach((m) => {
+          const div = document.createElement('div');
+          div.className = 'msg' + (m.sender_id === me ? ' me' : '');
+          div.innerHTML = `
+            <div>${escapeHtml(m.body || '')}</div>
+            <div class="meta">
+              <span>${escapeHtml(m.meta?.displayName || '')}</span>
+              <time>${escapeHtml(m.meta?.createdLabel || '')}</time>
+            </div>
+          `;
+          box.appendChild(div);
+        });
+        box.scrollTop = box.scrollHeight;
+        // Also refresh right panel info
+        renderRightPanels();
+      }
+
+      function renderOrders(orders) {
+        const cont = document.getElementById('opsOrders');
+        cont.innerHTML = '';
+        if (!orders || !orders.length) {
+          cont.innerHTML = '<div class="empty-state">لا توجد طلبات / No orders</div>';
+          return;
+        }
+        orders.forEach((o) => {
+          const row = document.createElement('div');
+          row.className = 'order-item';
+          row.innerHTML = `
+            <div class="order-main">
+              <strong>#${escapeHtml(o.id)}</strong>
+              <small>${escapeHtml(formatTime(o.created_at))}</small>
+              <div>${escapeHtml(o.customer_name || '')}</div>
+            </div>
+            <div class="order-actions">
+              <select class="order-status-select" data-id="${o.id}">
+                ${['pending','assigned','accepted','on_the_way','delivered','cancelled','rejected'].map(s => `<option value="${s}" ${s===o.status?'selected':''}>${s}</option>`).join('')}
+              </select>
+              ${o.customer_phone ? `<a class="btn-icon" href="tel:${o.customer_phone}" title="اتصال"><i class="fas fa-phone"></i></a>` : ''}
+              <button class="btn-icon" data-reassign="${o.id}" title="إعادة تعيين"><i class="fas fa-random"></i></button>
+            </div>
+          `;
+          cont.appendChild(row);
+        });
+        cont.querySelectorAll('.order-status-select').forEach(sel => {
+          sel.addEventListener('change', async (e) => {
+            const id = e.target.dataset.id;
+            const status = e.target.value;
+            try {
+              const { error } = await supabaseClient.from('orders').update({ status, updated_at: new Date().toISOString() }).eq('id', id);
+              if (error) throw error;
+              alert('تم تحديث الحالة');
+            } catch (err) {
+              console.error(err);
+              alert('تعذر تحديث حالة الطلب');
+            }
+          });
+        });
+        cont.querySelectorAll('[data-reassign]').forEach(btn => {
+          btn.addEventListener('click', async () => {
+            try {
+              await AdminMessaging.quickReassign?.(btn.dataset.reassign);
+              alert('تمت إعادة التعيين');
+            } catch (e) {
+              console.error(e);
+              alert('فشلت إعادة التعيين');
+            }
+          });
+        });
+      }
+
+      function renderRightPanels() {
+        // Driver tab: show driver profile link and location (if counterpart is driver)
+        const conv = AdminMessaging.state.conversations.find(c => c.id === AdminMessaging.state.activeConversationId);
+        const counterpart = conv?.meta?.counterpart || null;
+        // Driver link
+        const driverLink = document.getElementById('driverProfileLink');
+        if (driverLink) {
+          if (counterpart && (counterpart.role || '').toLowerCase() === 'driver') {
+            driverLink.textContent = `ملف السائق: ${counterpart.name || counterpart.phone || counterpart.id}`;
+            driverLink.href = `./index.html#driver=${counterpart.id}`;
+            driverLink.classList.remove('hidden');
+          } else {
+            driverLink.classList.add('hidden');
+          }
+        }
+        // Driver location
+        if (counterpart && (counterpart.role || '').toLowerCase() === 'driver') {
+          loadDriverLocation(counterpart.id);
+        } else {
+          const coords = document.getElementById('driverCoords');
+          if (coords) coords.textContent = '-';
+        }
+      }
+
+      async function loadDriverLocation(userId) {
+        try {
+          const { data, error } = await supabaseClient.from('users').select('latitude,longitude,name,phone').eq('id', userId).single();
+          if (error) throw error;
+          const lat = parseFloat(data?.latitude ?? '0'); const lng = parseFloat(data?.longitude ?? '0');
+          const coords = document.getElementById('driverCoords');
+          if (coords) coords.textContent = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+          if (window.mapboxgl && CONFIG.MAPBOX_ACCESS_TOKEN && document.getElementById('driverMap')) {
+            mapboxgl.accessToken = CONFIG.MAPBOX_ACCESS_TOKEN;
+            const map = new mapboxgl.Map({ container: 'driverMap', style: 'mapbox://styles/mapbox/streets-v11', center: [lng, lat], zoom: 12 });
+            new mapboxgl.Marker().setLngLat([lng, lat]).addTo(map);
+          }
+        } catch (e) {
+          console.warn('loadDriverLocation', e);
+        }
+      }
+
+      function copyDriverCoords() {
+        const el = document.getElementById('driverCoords');
+        if (!el) return;
+        const text = el.textContent || '';
+        navigator.clipboard.writeText(text).then(() => alert('تم نسخ الإحداثيات')).catch(() => alert('تعذر النسخ'));
+      }
+
+      function handleSend() {
+        const ta = document.getElementById('opsCompose');
+        const text = ta.value.trim();
+        if (!text) return;
+        AdminMessaging.sendMessage(text).then(() => { ta.value = ''; }).catch((e) => { console.error(e); alert('تعذر إرسال الرسالة'); });
+      }
+
+      function setActivePane(name) {
+        document.querySelectorAll('.ops-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.ops-pane').forEach(p => p.classList.remove('active'));
+        document.getElementById(`tab${capitalize(name)}`).classList.add('active');
+        document.getElementById(`pane-${name}`).classList.add('active');
+      }
+
+      function escapeHtml(v) { if (v == null) return ''; return String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\"/g,'&quot;').replace(/'/g,'&#039;'); }
+      function formatTime(value) { try { const d = new Date(value); return d.toLocaleString('ar-IQ', { hour12:false }); } catch(_) { return value; } }
+      function capitalize(s) { return (s||'').charAt(0).toUpperCase() + (s||'').slice(1); }
+    </script>
+    <script src="https://kit.fontawesome.com/a2e0e6ad66.js" crossorigin="anonymous"></script>
+  </head>
+  <body>
+    <div class="ops-shell">
+      <header class="ops-header">
+        <div class="left">
+          <h1>غرفة عمليات الرسائل</h1>
+        </div>
+        <div class="right ops-toolbar">
+          <a class="ops-btn secondary" href="./index.html">العودة للوحة التحكم</a>
+        </div>
+      </header>
+      <main class="ops-container">
+        <!-- Conversations -->
+        <aside class="ops-card">
+          <div class="card-header">قائمة المحادثات</div>
+          <div class="card-body">
+            <div class="ops-toolbar" style="padding:8px;">
+              <input id="opsSearch" class="ops-input" placeholder="بحث..." />
+              <select id="opsRole" class="ops-select">
+                <option value="all">الكل</option>
+                <option value="driver">سائق</option>
+                <option value="merchant">تاجر</option>
+                <option value="customer">عميل</option>
+              </select>
+            </div>
+            <div id="opsConversations" class="ops-conversations-list"></div>
+          </div>
+        </aside>
+        <!-- Messages -->
+        <section class="ops-card">
+          <div class="card-header">المحادثة</div>
+          <div class="card-body">
+            <div id="opsMessages" class="ops-messages"></div>
+          </div>
+          <div class="ops-compose">
+            <textarea id="opsCompose" placeholder="اكتب رسالة..."></textarea>
+            <div class="actions">
+              <div class="ops-toolbar">
+                <button class="ops-btn icon" title="ملفات"><i class="fas fa-paperclip"></i></button>
+                <button class="ops-btn icon" title="رد"><i class="fas fa-reply"></i></button>
+              </div>
+              <div class="ops-space"></div>
+              <button id="opsSend" class="ops-btn"><i class="fas fa-paper-plane"></i> إرسال</button>
+            </div>
+          </div>
+        </section>
+        <!-- Right Panel -->
+        <aside class="ops-card">
+          <div class="card-header">لوحة التحكم</div>
+          <div class="card-body">
+            <div class="ops-tabs">
+              <button id="tabOrders" class="ops-tab active">الطلبات</button>
+              <button id="tabDriver" class="ops-tab">السائق</button>
+              <button id="tabUser" class="ops-tab">المستخدم</button>
+            </div>
+            <div id="pane-orders" class="ops-pane active">
+              <div id="opsOrders" style="padding:10px;"></div>
+            </div>
+            <div id="pane-driver" class="ops-pane">
+              <div style="padding:10px;">
+                <a id="driverProfileLink" class="ops-btn secondary hidden" href="#" target="_blank">ملف السائق</a>
+                <div style="height:8px;"></div>
+                <div id="driverMap"></div>
+                <div class="ops-row" style="margin-top:8px;">
+                  <div id="driverCoords">-</div>
+                  <div class="ops-space"></div>
+                  <button id="copyCoords" class="ops-btn secondary">نسخ الإحداثيات</button>
+                </div>
+              </div>
+            </div>
+            <div id="pane-user" class="ops-pane">
+              <div style="padding:10px;">
+                <div class="empty-state">قريباً: بيانات المستخدم، تاريخ التذاكر، أدوات سريعة</div>
+              </div>
+            </div>
+          </div>
+        </aside>
+      </main>
+    </div>
+  </body>
+  </html>
+

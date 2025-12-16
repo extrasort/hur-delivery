@@ -1,0 +1,9 @@
+{
+  "tasks": {
+    "serve": "deno run --allow-net --allow-env --allow-read index.ts"
+  },
+  "imports": {
+    "multiparser": "https://deno.land/x/multiparser@0.114.0/mod.ts"
+  }
+}
+

@@ -1,0 +1,110 @@
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.buildlog/
+.history
+.svn/
+migrate_working_dir/
+
+# IntelliJ related
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# VSCode
+.vscode/
+
+# Flutter/Dart/Pub related
+**/doc/api/
+**/ios/Flutter/.last_build_id
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+/build/
+
+# Symbolication related
+app.*.symbols
+
+# Obfuscation related
+app.*.map.json
+
+# Android Studio will place build artifacts here
+/android/app/debug
+/android/app/profile
+/android/app/release
+
+# Node.js
+.wwebjs_auth/
+node_modules/
+package-lock.json
+dist/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Firebase
+**/google-services.json
+**/GoogleService-Info.plist
+firebase_options.dart
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+
+# Local deployment folders
+.netlify
+
+# Credentials and secrets
+ADMIN_CREDENTIALS.txt
+*_CREDENTIALS.txt
+*_SECRETS.txt
+*.pem
+*.key
+
+# Test and debug files
+test_*.dart
+*_test.dart
+debug_*.sql
+test_*.sql
+
+# Documentation (keep only main README files)
+**/DEPLOY*.md
+**/FIX*.md
+**/DEBUG*.md
+**/SETUP*.md
+**/GUIDE*.md
+**/*_SUMMARY.md
+**/*_COMPLETE.md
+
+# Scripts
+*.sh
+deploy*.js
+webhook*.js
+webhook*.php
+webhook*.html
+
+# CSV and Excel files (data files)
+*.csv
+*.xlsx
+*.xls
+
+# GeoJSON data files
+*.geojson
+*.json.bak
+
+# Android signing
+*.jks
+*.keystore
+key.properties
+local.properties

@@ -1,0 +1,13 @@
+# Admin Panel .htaccess
+# This file ensures proper routing for the admin panel
+
+# Enable RewriteEngine
+RewriteEngine On
+
+# Serve index.html for all requests in admin folder
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ /admin/index.html [L]
+
+
+

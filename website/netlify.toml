@@ -1,0 +1,32 @@
+# Netlify configuration for Hur Delivery Website
+
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+# Note: Asset routing is handled by _redirects file
+# This file focuses on high-level routing rules
+
+# Main site routing (catch-all, must be last)
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[build.environment]
+  NODE_VERSION = "18"
+
+# Headers for security and performance
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
